@@ -19,6 +19,8 @@ student_dir = os.path.join(datadir, 'students')
 
 class SimpleTest(TestCase):
 
+    fixtures = ['initial_data.json']
+
     def setUp(self):
         self.barcodefiles = glob(os.path.join(barcode_dir, '*.xls'))
         self.studentfiles = glob(os.path.join(student_dir, '*.xls'))
