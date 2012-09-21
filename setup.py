@@ -7,6 +7,6 @@ setup(
     author_email = "sydney.weidman@gmail.com",
     packages = find_packages('src'),
     package_dir = { '': 'src'},
-    version="0.2",
+    version="0.2.1",
     install_requires = ['Django','pymarc'],
     )
