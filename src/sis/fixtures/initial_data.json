@@ -1,0 +1,1 @@
+[{"pk": "1", "model": "sis.patrontype", "fields": {"pcode": "uow", "pdesc": "U of W Student"}}, {"pk": "2", "model": "sis.patrontype", "fields": {"pcode": "col", "pdesc": "Collegiate Student"}}, {"pk": "46", "model": "sis.patrontype", "fields": {"pcode": "grad", "pdesc": "Graduate Studies"}}]

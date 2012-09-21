@@ -1,0 +1,35 @@
+|||0|0| | |0|n|G|0|@main="p"
+|||0|0| | |0|n|G|0|@marc=""
+|||0|0| | |0|n|G|0|@msg="Patron records will be created"
+999||z|0|10| | |0|n|G|0|#com="recs"@recs="psyd"
+999||x|0|1| | |0|n|G|0|#com="clsi"@clsi="n"
+999||w|0|1| | |0|n|N|0|#com="test"@test="n"
+999||v|0|1| | |0|n|N|0|#com="init"@init="n"
+999||u|0|1| | |0|n|N|0|#com="disp"@disp="n"
+/^999||o|0|20| | |0|n|G|0|#com="dflt"@dflt=""
+999||t|0|10| | |0|n|G|0|#com="ov"@ov_tag="u"
+|||0|0| | |0|n|G|0|@ov_action="p"
+|||0|0| | |0|n|G|0|@ov_protect="p=F44-46,48-51,54-56,95,96,99,101-105,122-125,163,268Vb(:k)mx0123456789="
+|||0|0| | |0|n|G|0|@holdsymb=""
+|||0|0| | |0|n|G|0|@bldmarc=""
+|||0|0| | |0|n|G|0|@callnum="nynnn"
+|||0|0| | |0|n|G|0|@diac=""
+|||0|0| | |0|n|G|0|@diac_sub_table="utf8"
+|||0|0| | |0|n|G|0|@ldx=""
+|||0|0| | |0|n|G|0|@busy="n"
+|||0|0| | |0|n|G|0|@busy_file="busy_recs.lmarc"
+|||0|0| | |0|n|G|0|@title="n"
+|||0|0| | |0|n|G|0|@cdate="y"
+|||0|0| | |0|n|G|0|@year_2000="50"
+080||a|0|8|p| |43|n|N|0|exp date
+084||a|0|3|p| |47|n|N|0|ptype
+085||a|0|5|p| |53|n|N|0|home libr
+020||+|0|0|p|u|0|y|N|0|id
+030||+|0|0|p|b|0|y|N|0|barcode
+100||+|0|0|p|n|0|y|N|0|name
+220||+|0|0|p|a|0|y|N|0|address1
+225||+|0|0|p|t|0|y|N|0|tel1
+230||+|0|0|p|h|0|n|N|0|address2
+235||+|0|0|p|p|0|n|N|0|tel2
+302||+|0|0|p|d|0|n|N|0|dept
+550||+|0|0|p|z|0|y|N|0|email
