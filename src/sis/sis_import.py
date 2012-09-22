@@ -3,12 +3,6 @@ import sys
 import logging
 from sis.unicodecsv import unicode_csv_dictreader as DictReader
 from pymarc import MARCWriter
-from django.conf import settings
-# All other Django modules must go *after* the settings.configure call
-
-if not settings.configured:
-    print "Please set DJANGO_SETTINGS_MODULE before running this script"
-    
 from django.db import transaction, IntegrityError
 from django.db.models import Max
 from sis.models import ProtoStudent, ProtoBarcode, Student, PatronType

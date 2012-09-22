@@ -7,9 +7,10 @@ import subprocess
 from com.sun.star.connection import ConnectionSetupException
 from com.sun.star.connection import NoConnectException
 from com.sun.star.lang import DisposedException
+from django.conf import settings
 
-CONN_DFLT = 'socket,host=%s,port=%d;urp;StarOffice.ComponentContext'
-OOBIN_DFLT = '/usr/bin/ooffice'
+CONN_DFLT = settings.CONN_DFLT
+OOBIN_DFLT = settings.OOBIN_DFLT
 
 def get_new_extension(orig, ext):
     d = os.path.dirname(orig)
@@ -83,7 +84,7 @@ def uno_init(connstr, try_start=True):
         desktop = service_manager.createInstance("com.sun.star.frame.Desktop")
         return desktop
     except (NoConnectException, ConnectionSetupException):
-        cmd = [OOBIN_DFLT, '-invisible', '-accept=%s' % (connstr,)]
+        cmd = [OOBIN_DFLT, '--headless','--invisible', '--accept=\'%s\'' % (connstr,)]
         logging.info('Connection string: %s' % (connstr,))
         if try_start:
             logging.info('Trying to start UNO server')
