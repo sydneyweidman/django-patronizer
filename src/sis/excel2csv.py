@@ -10,21 +10,30 @@ from com.sun.star.connection import NoConnectException
 from com.sun.star.lang import DisposedException
 from django.conf import settings
 
-CONN_DFLT = settings.CONN_DFLT
-ENV_DFLT = settings.ENV_DFLT
+CONN_DFLT = 'uno:socket,host=%s,port=%d;urp;StarOffice.ServiceManager'
+
+try:
+    ENV_DFLT = settings.ENV_DFLT
+except AttributeError:
+    ENV_DFLT = {'PATH':'/bin:/usr/bin',}
 
 LOCATIONS = ['/usr/bin/soffice', '/usr/bin/ooffice']
 OOBIN_DFLT = None
+# if OOBIN_DFLT is in settings, use it first. If not, try the other
+# two possibilities, using the first one found.
 try:
-    OOBIN_DFLT = settings.OOBIN_DFLT
+    LOCATIONS.insert(0, settings.OOBIN_DFLT)
 except AttributeError:
-    for l in LOCATIONS:
-        if os.access(l, os.F_OK and os.X_OK):
-            OOBIN_DFLT = l
+    pass
+for l in LOCATIONS:
+    if os.access(l, os.X_OK):
+        OOBIN_DFLT = l
+        break
+# None of our guesses worked, so the user will have to tell us
 if OOBIN_DFLT is None:
     raise AttributeError("Please set OOBIN_DFLT to the LibreOffice executable in settings.py")
 
-basecmd = "%s --headless --invisible --accept=\"socket,host=localhost,port=%s;urp;StarOffice.ComponentContext\""
+basecmd = "%s -headless -invisible -accept=\"socket,host=localhost,port=%s;urp;StarOffice.ComponentContext\""
 
 def get_new_extension(orig, ext):
     d = os.path.dirname(orig)
