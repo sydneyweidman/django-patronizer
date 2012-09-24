@@ -11,8 +11,18 @@ from com.sun.star.lang import DisposedException
 from django.conf import settings
 
 CONN_DFLT = settings.CONN_DFLT
-OOBIN_DFLT = settings.OOBIN_DFLT
 ENV_DFLT = settings.ENV_DFLT
+
+LOCATIONS = ['/usr/bin/soffice', '/usr/bin/ooffice']
+OOBIN_DFLT = None
+try:
+    OOBIN_DFLT = settings.OOBIN_DFLT
+except AttributeError:
+    for l in LOCATIONS:
+        if os.access(l, os.F_OK and os.X_OK):
+            OOBIN_DFLT = l
+if OOBIN_DFLT is None:
+    raise AttributeError("Please set OOBIN_DFLT to the LibreOffice executable in settings.py")
 
 basecmd = "%s --headless --invisible --accept=\"socket,host=localhost,port=%s;urp;StarOffice.ComponentContext\""
 
