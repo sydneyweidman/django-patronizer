@@ -1,9 +1,10 @@
 import os
 import sys
 import uno
-import time
 import logging
 import subprocess
+from multiprocessing import Process
+from time import sleep
 from com.sun.star.connection import ConnectionSetupException
 from com.sun.star.connection import NoConnectException
 from com.sun.star.lang import DisposedException
@@ -11,6 +12,9 @@ from django.conf import settings
 
 CONN_DFLT = settings.CONN_DFLT
 OOBIN_DFLT = settings.OOBIN_DFLT
+ENV_DFLT = settings.ENV_DFLT
+
+basecmd = "%s --headless --invisible --accept=\"socket,host=localhost,port=%s;urp;StarOffice.ComponentContext\""
 
 def get_new_extension(orig, ext):
     d = os.path.dirname(orig)
@@ -65,35 +69,36 @@ def deleteColumn(doc, sheet=0, col=0):
     cols = targ_sheet.getColumns()
     cols.removeByIndex(col,1) # remove 1 column starting a column col
 
+def uno_start(oobin=OOBIN_DFLT, port=2002, env=ENV_DFLT):
+    """Start the uno listener so that we can get a context"""
+    cmd = basecmd % (oobin, port)
+    args = (cmd,)
+    kwargs = {'env':env, 'stdout':subprocess.PIPE, 'stderr':subprocess.STDOUT, 'shell':True }
+    proc = Process(target=subprocess.Popen, args=args, kwargs=kwargs)
+    proc.start()
+
 def uno_init(connstr, try_start=True):
     """Start OpenOffice.org as a service using connstr as the -accept
     arg and return the desktop object."""
     try:
-        # Get the uno component context from the PyUNO runtime
-        local_context = uno.getComponentContext()
-        # Get the local Service Manager
-        local_service_manager = local_context.ServiceManager
-        # Create the UnoUrlResolver on the Python side.
-        local_resolver = local_service_manager.createInstanceWithContext(
-            "com.sun.star.bridge.UnoUrlResolver", local_context)
-        logging.info('Getting context using %s' % (connstr,))
-        context = local_resolver.resolve('uno:' + connstr)
-        # Get the ServiceManager object
-        service_manager = context.ServiceManager
-        # Create the Desktop instance
-        desktop = service_manager.createInstance("com.sun.star.frame.Desktop")
+        localContext = uno.getComponentContext()
+
+        resolver = localContext.ServiceManager.createInstanceWithContext(
+                   "com.sun.star.bridge.UnoUrlResolver", localContext )
+
+        smgr = resolver.resolve( "uno:socket,host=localhost,port=2002;urp;StarOffice.ServiceManager" )
+        remoteContext = smgr.getPropertyValue( "DefaultContext" )
+
+        desktop = smgr.createInstanceWithContext( "com.sun.star.frame.Desktop",remoteContext)
         return desktop
     except (NoConnectException, ConnectionSetupException):
-        cmd = [OOBIN_DFLT, '--headless','--invisible', '--accept=\'%s\'' % (connstr,)]
-        logging.info('Connection string: %s' % (connstr,))
         if try_start:
-            logging.info('Trying to start UNO server')
-            status = subprocess.call(cmd)
-            time.sleep(5)
-            logging.info('status = %d', status)
-            return uno_init(connstr, False)
+            sleep(2)
+            uno_start()
+            sleep(2)
+            uno_init(connstr, try_start=False)
         else:
-            logging.exception("UNO server not started. Cmd:\n %s" % (cmd,))
+            logging.exception("UNO server not started.")
             raise 
     
 def get_desktop(host='localhost', port=2002):
@@ -104,7 +109,7 @@ def modify_sid(filename, host='localhost', port=2002, desktop=None, terminate=Tr
     """Open and modify the Student ID file (delete some rows and
     columns and save it as a csv file
     Parameters:
-    
+     
       * filename - absolute path (or use ~ for userdir)
 
       * host - the host on which the UNO server is listening
