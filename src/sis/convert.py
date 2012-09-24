@@ -19,19 +19,20 @@ def convert(metadata, **kwargs):
     for b in metadata['barcodefiles']:
         b = os.path.abspath(os.path.expanduser(b))
         if not os.path.isfile(b):
-            print "File not found: %s" % (b,)
+            sys.stderr.write("File not found: %s\n" % (b,))
             return 3
         modify_sid(b, desktop=desktop, terminate=False)
     for s in metadata['studentfiles']:
         s = os.path.abspath(os.path.expanduser(s))
         if not os.path.isfile(s):
-            print "File not found: %s" % (s,)
+            sys.stderr.write("File not found: %s\n" % (s,))
             return 3
         modify_sis(s, desktop=desktop, terminate=False)
-    try:
-        desktop.terminate()
-    except DisposedException:
-        pass
+    if desktop:
+        try:
+            desktop.terminate()
+        except DisposedException:
+            pass
     return ret
 
 if __name__ == '__main__':
