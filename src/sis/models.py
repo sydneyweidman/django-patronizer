@@ -37,6 +37,8 @@ class Student(models.Model):
     telephone_2 = models.CharField(max_length=20, null=True, blank=True)    
     barcode = models.CharField(max_length=15, null=True, blank=True)
     ptype = models.ForeignKey(PatronType)
+    created = models.DateField(auto_now_add=True)
+    modified = models.DateField(auto_now=True)
 
     def full_name(self):
         """Get the name as required for innopac"""
