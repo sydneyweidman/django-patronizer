@@ -9,6 +9,7 @@ from com.sun.star.connection import ConnectionSetupException
 from com.sun.star.connection import NoConnectException
 from com.sun.star.lang import DisposedException
 from django.conf import settings
+from sis.unoservice import UnoService
 
 CONN_DFLT = 'uno:socket,host=%s,port=%d;urp;StarOffice.ServiceManager'
 
@@ -88,41 +89,9 @@ def deleteColumn(doc, sheet=0, col=0):
     cols = targ_sheet.getColumns()
     cols.removeByIndex(col,1) # remove 1 column starting a column col
 
-def uno_start(oobin=OOBIN_DFLT, port=2002, env=ENV_DFLT):
-    """Start the uno listener so that we can get a context"""
-    cmd = basecmd % (oobin, port)
-    args = (cmd,)
-    kwargs = {'env':env, 'stdout':subprocess.PIPE, 'stderr':subprocess.STDOUT, 'shell':True }
-    proc = Process(target=subprocess.Popen, args=args, kwargs=kwargs)
-    proc.start()
-
-def uno_init(connstr, try_start=True):
-    """Start OpenOffice.org as a service using connstr as the -accept
-    arg and return the desktop object."""
-    try:
-        localContext = uno.getComponentContext()
-
-        resolver = localContext.ServiceManager.createInstanceWithContext(
-                   "com.sun.star.bridge.UnoUrlResolver", localContext )
-
-        smgr = resolver.resolve( "uno:socket,host=localhost,port=2002;urp;StarOffice.ServiceManager" )
-        remoteContext = smgr.getPropertyValue( "DefaultContext" )
-
-        desktop = smgr.createInstanceWithContext( "com.sun.star.frame.Desktop",remoteContext)
-        return desktop
-    except (NoConnectException, ConnectionSetupException):
-        if try_start:
-            sleep(2)
-            uno_start()
-            sleep(2)
-            uno_init(connstr, try_start=False)
-        else:
-            logging.exception("UNO server not started.")
-            raise 
-    
 def get_desktop(host='localhost', port=2002):
     """Get an instance of the UNO Desktop"""
-    return uno_init(CONN_DFLT % (host, port))
+    return UnoService(host=host, port=port).connect()
 
 def modify_sid(filename, host='localhost', port=2002, desktop=None, terminate=True):
     """Open and modify the Student ID file (delete some rows and
@@ -139,7 +108,7 @@ def modify_sid(filename, host='localhost', port=2002, desktop=None, terminate=Tr
     """
     filename = os.path.expanduser(filename)
     if desktop is None:
-        desktop = uno_init(CONN_DFLT % (host, port))
+        desktop = get_desktop(host, port)
     document = desktop.loadComponentFromURL('file://' + filename,'_blank',0,())
     logging.info('Loaded file %s' % (filename,))
     # delete the first row
@@ -225,7 +194,7 @@ def modify_sis(filename, host='localhost', port=2002, desktop=None, terminate=Tr
                   
     last_col = len(field_map) - 1
     if desktop is None:
-        desktop = uno_init(CONN_DFLT % (host, port))
+        desktop = get_desktop(host, port)
     document = desktop.loadComponentFromURL('file://' + filename,'_blank',0,())
     logging.info('Loaded file %s' % (filename,))
     sheets = document.getSheets()

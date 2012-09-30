@@ -11,12 +11,42 @@ from sis import sis_import
 from sis.excel2csv import get_new_extension
 from sis.convert import convert
 from sis.models import Student, ProtoBarcode, ProtoStudent, PatronType
+from sis.unoservice import UnoService, Options
 
 curdir = os.path.dirname(os.path.abspath(__file__))
 datadir = os.path.join(curdir,'testdata')
 barcode_dir = os.path.join(datadir,'barcodes')
 student_dir = os.path.join(datadir, 'students')
+env = dict(PYTHONPATH=os.getenv('PYTHONPATH'), PATH=os.getenv('PATH'))
 
+class TestUnoService(TestCase):
+
+    def setUp(self):
+        self.instance = UnoService()
+        self.defaults = UnoService.defaults
+        self.options = Options(self.defaults['options'])
+        self.env = env
+
+    def test_options(self):
+        """Check that the command line flags are properly handled"""
+        for i in self.defaults['options']:
+            assert getattr(self.options, i)
+
+    def test_default_accept(self):
+        """Make sure the accept string is set correctly"""
+        assert self.instance.accept == self.defaults['accept'].format(host=self.defaults['host'],
+                                                                      port=self.defaults['port'])
+
+    def test_connect_string(self):
+        """Make sure the connect string is set correctly"""
+        assert self.instance.connectstr == self.defaults['connectstr'].format(host=self.defaults['host'],
+                                                                      port=self.defaults['port'])
+    def test_start_and_connect(self):
+        """Make sure LibreOffice starts"""
+        assert self.instance.start() > 0
+        assert self.instance.connect() is not None
+        self.instance.terminate()
+        
 class SimpleTest(TestCase):
 
     fixtures = ['initial_data.json']
