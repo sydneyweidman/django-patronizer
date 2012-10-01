@@ -49,7 +49,7 @@ class TestUnoService(TestCase):
         
 class SimpleTest(TestCase):
 
-    fixtures = ['initial_data.json']
+    fixtures = ['patrontypes.json']
 
     def setUp(self):
         self.barcodefiles = glob(os.path.join(barcode_dir, '*.xls'))
