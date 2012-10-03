@@ -37,7 +37,7 @@ class UnoService(object):
                 'host':    'localhost',
                 'port':    '2002',
                 'env':     env,
-                'timeout': 2,
+                'timeout': 5,
                 }
 
     def __init__(self, oobin=defaults['oobin'], options=defaults['options'],
@@ -63,7 +63,9 @@ class UnoService(object):
         self.accept = accept.format(host=self.host, port=self.port)
         self.connectstr = connectstr.format(host=self.host, port=self.port)
         self.env = env
+        self.timeout = timeout
         self.desktop = None
+        self.proc = None
 
     def start(self):
         """Start the uno listener so that we can get a context. Return True if the process starts"""
@@ -72,13 +74,11 @@ class UnoService(object):
         log.info('Command: %s' % (cmd,))
         args = (cmd,)
         kwargs = {'env':self.env, 'stdout':subprocess.PIPE, 'stderr':subprocess.STDOUT, 'shell':True }
-        proc = Process(target=subprocess.Popen, args=args, kwargs=kwargs)
-        proc.start()
-        return proc.pid
+        self.proc = Process(target=subprocess.Popen, args=args, kwargs=kwargs)
+        self.proc.start()
+        return self.proc.pid
         
-    def connect(self, try_start=True):
-        """Connect to the running LibreOffice process and return a
-        com.sun.star.frame.Desktop"""
+    def _connect(self):
         try:
             localContext = uno.getComponentContext()
 
@@ -92,14 +92,18 @@ class UnoService(object):
             return self.desktop
 
         except (NoConnectException, ConnectionSetupException):
-            if try_start:
-                sleep(2)
-                self.start()
-                sleep(2)
-                self.connect(try_start=False)
-            else:
-                logging.exception("UNO server not started.")
-                raise 
+            logging.exception("UNO server not started.")
+            raise 
+        
+    def connect(self, try_start=True):
+        """Connect to the running LibreOffice process and return a
+        com.sun.star.frame.Desktop"""
+        self.start()
+        sleep(self.timeout)
+        if self.proc:
+            return self._connect()
+        else:
+            return None
 
     def terminate(self):
         """Terminate the Desktop instance"""
@@ -107,3 +111,7 @@ class UnoService(object):
             self.desktop.terminate()
         except DisposedException:
             pass
+        finally:
+            if self.proc:
+                log.warn('Terminating LibreOffice PID %d' % (self.proc.pid,))
+                self.proc.terminate()
