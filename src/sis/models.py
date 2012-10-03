@@ -1,3 +1,7 @@
+import logging
+from datetime import datetime
+from pytz import utc
+from django.conf import settings
 from django.db import models
 from django.core.validators import RegexValidator
 from pymarc.record import Record
@@ -15,6 +19,11 @@ SNLEN = 7
 student_id_validator = RegexValidator('\d{%d}' % (SNLEN,), message="Student numbers must be %d digits long" % (SNLEN,))
 barcode_validator = RegexValidator('\d{13,14}', message="Barcodes must be 14 digits long")
 
+log = logging.getLogger(__name__)
+logging.basicConfig()
+if settings.DEBUG:
+    log.setLevel(logging.DEBUG)
+    
 class PatronType(models.Model):
     ptype = models.CharField("patron type", max_length=2, primary_key=True)
     pcode = models.CharField("patron code", max_length=5)
@@ -37,9 +46,19 @@ class Student(models.Model):
     telephone_2 = models.CharField(max_length=20, null=True, blank=True)    
     barcode = models.CharField(max_length=15, null=True, blank=True)
     ptype = models.ForeignKey(PatronType)
-    created = models.DateField(auto_now_add=True)
-    modified = models.DateField(auto_now=True)
+    created = models.DateTimeField()
+    modified = models.DateTimeField(auto_now=True)
 
+    def __unicode__(self):
+        return u"%s %s (%s)" % (self.first_name, self.last_name, self.student_id)
+    
+    def save(self, *args, **kwargs):
+        """Custom save method to handle self.created"""
+        if not self.created:
+            self.created = datetime.now(tz=utc)
+        self.modified = datetime.now(tz=utc)
+        return super(Student, self).save(*args, **kwargs)
+    
     def full_name(self):
         """Get the name as required for innopac"""
         return u"%s, %s" % (self.last_name, self.first_name)
@@ -105,8 +124,6 @@ class ProtoStudent(models.Model):
     telephone1 = models.CharField(max_length=25, null=True, blank=True)
     telephone_type = models.CharField(max_length=5, null=True, blank=True)
     ptype = models.ForeignKey(PatronType)
-    created = models.DateField(auto_now_add=True)
-    modified = models.DateField(auto_now=True)
     
     def __unicode__(self):
         return "%s, %s %s" % (self.last_name, self.first_name, self.student_id,)
@@ -119,8 +136,6 @@ class ProtoBarcode(models.Model):
     operator = models.CharField(max_length=50, null=True, blank=True)
     card_issued_to = models.CharField(max_length=255)
     person_num = models.CharField(max_length=20)
-    created = models.DateField(auto_now_add=True)
-    modified = models.DateField(auto_now=True)
     
     def __unicode__(self):
         return u'barcode: %s, sn: %s' % (self.barcode, self.person_num,)

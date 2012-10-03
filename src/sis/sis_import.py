@@ -1,6 +1,8 @@
 import os
 import sys
 import logging
+from datetime import datetime
+from pytz import utc
 from sis.unicodecsv import unicode_csv_dictreader as DictReader
 from pymarc import MARCWriter
 from django.db import transaction, IntegrityError
@@ -79,7 +81,7 @@ def do_students(studentfiles):
             student = ProtoStudent(**row)
             student.ptype = ptype
             try:
-                student.clean_fields(exclude=['email_address'])
+                student.clean_fields(exclude=['email_address','created'])
                 try:
                     student.save()
                 except IntegrityError:
@@ -139,12 +141,11 @@ def normalize_students(ptype=None):
         s.barcode = barcode
         s.ptype = proto.ptype
         try:
-            s.full_clean()
+            s.clean_fields(exclude=['created'])
         except ValidationError, e:
             for key in e.message_dict:
                 log.info("%s: %s" % (key, e.message_dict[key],))
-        else:
-            s.save()
+        s.save()
         
 if __name__ == '__main__':
 
