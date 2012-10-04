@@ -1,0 +1,7 @@
+*.pyc
+*.pyo
+*.lfts
+*~
+*.egg-info
+testdata/
+env.sh
