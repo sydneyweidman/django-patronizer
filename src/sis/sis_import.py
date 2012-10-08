@@ -1,8 +1,6 @@
 import os
 import sys
 import logging
-from datetime import datetime
-from pytz import utc
 from sis.unicodecsv import unicode_csv_dictreader as DictReader
 from pymarc import MARCWriter
 from django.db import transaction, IntegrityError

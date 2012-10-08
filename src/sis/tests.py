@@ -5,7 +5,9 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 import os
+import re
 from csv import DictReader
+from sis.unicodecsv import unicode_csv_reader as csvreader
 from cStringIO import StringIO
 from datetime import datetime
 from pytz import utc
@@ -23,6 +25,8 @@ datadir = os.path.join(curdir,'testdata')
 barcode_dir = os.path.join(datadir,'barcodes')
 student_dir = os.path.join(datadir, 'students')
 env = dict(PYTHONPATH=os.getenv('PYTHONPATH'), PATH=os.getenv('PATH'))
+
+student_id_pattern = re.compile('\d{7}')
 
 bcdata = """"barcode","card_format","station","operator","card_issued_to","person_num"
 ,,,,,
@@ -174,7 +178,23 @@ class TestSis(TestCase):
         sis_import.do_students(self.studentcsv)
         assert len(ProtoStudent.objects.all())
         sis_import.normalize_students()
-        assert len(Student.objects.all())
+        # compare ptype from csv to ptype in ProtoStudent
+        ptype = sis_import.get_ptype_for_file('uow.csv')
+        uowcsv = csvreader(open(os.path.join(student_dir,'uow.csv')))
+        for row in uowcsv:
+            if not student_id_pattern.match(row[0]):
+                continue
+            ps = ProtoStudent.objects.filter(student_id=row[0])[0]
+            try:
+                assert ps.ptype == ptype
+            except AssertionError:
+                import pdb; pdb.set_trace()
+        # check that records from ProtoStudent have the same ptype as
+        # the corresponding record in Student
+        uow = ProtoStudent.objects.filter(ptype=ptype)
+        for r in uow:
+            s = Student.objects.get(student_id=r.student_id)
+            assert s.ptype == ptype 
         sis_import.write_marc('/tmp/testdata.lfts')
         
     def tearDown(self):
