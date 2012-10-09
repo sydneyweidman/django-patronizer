@@ -170,25 +170,23 @@ class TestSis(TestCase):
                         print "Error: %s" % (e,)
         assert len(ProtoBarcode.objects.all()) == 13
 
-    def test_create_student_recs(self):
-        """Test generating student records from csv files"""
+    def test_create_student_recs_uow(self):
+        """Test generating student records from csv files (uow patron type only)"""
         convert(self.metadata)
         sis_import.do_barcodes(self.barcodecsv)
         assert len(ProtoBarcode.objects.all())
-        sis_import.do_students(self.studentcsv)
+        uowcsvf = os.path.join(student_dir,'uow.csv')
+        sis_import.do_students([uowcsvf])
         assert len(ProtoStudent.objects.all())
         sis_import.normalize_students()
         # compare ptype from csv to ptype in ProtoStudent
         ptype = sis_import.get_ptype_for_file('uow.csv')
-        uowcsv = csvreader(open(os.path.join(student_dir,'uow.csv')))
+        uowcsv = csvreader(open(uowcsvf))
         for row in uowcsv:
             if not student_id_pattern.match(row[0]):
                 continue
             ps = ProtoStudent.objects.filter(student_id=row[0])[0]
-            try:
-                assert ps.ptype == ptype
-            except AssertionError:
-                import pdb; pdb.set_trace()
+            assert ps.ptype == ptype
         # check that records from ProtoStudent have the same ptype as
         # the corresponding record in Student
         uow = ProtoStudent.objects.filter(ptype=ptype)
