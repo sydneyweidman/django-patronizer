@@ -106,6 +106,11 @@ def normalize_students(ptype=None):
     stlist.sort()
     for student in stlist:
         recs = ProtoStudent.objects.filter(student_id=student)
+        if not ptype:
+            # if we're not specifying a ptype, it is possible that
+            # recs contains records with different patron types
+            rank = recs.aggregate(rank=Max('ptype__rank'))['rank']
+            ptype = recs.filter(ptype__rank=rank)[0].ptype
         proto = recs[0]
         barcodes = ProtoBarcode.objects.filter(person_num=student).aggregate(Max('barcode'))
         barcode = barcodes['barcode__max']
@@ -137,7 +142,7 @@ def normalize_students(ptype=None):
                 uwe = e
         s.email_address = uwe
         s.barcode = barcode
-        s.ptype = proto.ptype
+        s.ptype = ptype
         try:
             s.clean_fields(exclude=['created'])
         except ValidationError, e:

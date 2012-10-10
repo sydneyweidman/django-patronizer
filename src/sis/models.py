@@ -28,7 +28,8 @@ class PatronType(models.Model):
     ptype = models.CharField("patron type", max_length=2, primary_key=True)
     pcode = models.CharField("patron code", max_length=5)
     pdesc = models.CharField("patron description", max_length=50)
-
+    rank = models.IntegerField(unique=True)
+    
     def __unicode__(self):
         return self.pcode
     
